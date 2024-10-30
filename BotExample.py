@@ -3,6 +3,7 @@ import logging
 import time
 import configparser
 
+
 # Загрузка токена из файла конфигурации
 config = configparser.ConfigParser()
 config.read('config.ini')
