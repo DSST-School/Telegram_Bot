@@ -23,10 +23,13 @@ def send_welcome(message):
 # Обработка команды /help
 @bot.message_handler(commands=['help'])
 def send_help(message):
-    bot.reply_to(message, "Используйте команды:\n"
-                          "/start - начать\n"
-                          "/help - помощь\n"
-                          "/exercises - выбрать упражнение по группе мышц")
+    help_text = (
+        "Используйте команды:\n"
+        "/start - начать\n"
+        "/help - помощь\n"
+        "/exercises - выбрать упражнение по группе мышц"
+    )
+    bot.reply_to(message, help_text)
 
 # Команда /exercises для выбора группы мышц
 @bot.message_handler(commands=['exercises'])
@@ -37,7 +40,7 @@ def send_exercise_options(message):
     bot.send_message(message.chat.id, "Выберите группу мышц:", reply_markup=markup)
 
 # Ответ на выбор группы мышц
-@bot.message_handler(func=lambda message: message.text in exercises.keys())
+@bot.message_handler(func=lambda message: message.text in exercises)
 def send_exercise(message):
     muscle_group = message.text
     exercise = random.choice(exercises[muscle_group])
@@ -45,8 +48,10 @@ def send_exercise(message):
 
 # Обработка любого другого сообщения
 @bot.message_handler(func=lambda message: True)
-def echo_all(message):
+def handle_unrecognized_message(message):
     bot.reply_to(message, "Используйте команду /exercises, чтобы выбрать группу мышц.")
 
 # Запуск бота
-bot.polling()
+if __name__ == '__main__':
+    bot.polling(none_stop=True)
+
