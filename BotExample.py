@@ -20,45 +20,36 @@ def send_message(message, text):
     except Exception as e:
         logging.error(f"Ошибка при отправке сообщения пользователю {message.from_user.username}: {e}")
 
-# Обработчик команды /start
-@bot.message_handler(commands=['start'])
-def send_welcome(message):
-    send_message(message, "Привет! Я ваш бот. Как я могу помочь вам?\nВведите /help для списка команд.")
+# Определение команд и обработка сообщений
+@bot.message_handler(commands=['start', 'help', 'info'])
+def handle_commands(message):
+    if message.text == '/start':
+        response = "Привет! Я ваш бот. Как я могу помочь вам?\nВведите /help для списка команд."
+    elif message.text == '/help':
+        response = (
+            "Доступные команды:\n"
+            "/start - начать общение\n"
+            "/help - помощь\n"
+            "/info - информация о боте\n"
+            "Просто напишите мне сообщение, и я повторю его!"
+        )
+    elif message.text == '/info':
+        response = "Я - бот, созданный для демонстрации возможностей Telegram API."
+    send_message(message, response)
 
-# Обработчик команды /help
-@bot.message_handler(commands=['help'])
-def send_help(message):
-    help_text = (
-        "Доступные команды:\n"
-        "/start - начать общение\n"
-        "/help - помощь\n"
-        "/info - информация о боте\n"
-        "Просто напишите мне сообщение, и я повторю его!"
-    )
-    send_message(message, help_text)
+# Обработчик текстовых и медиа сообщений
+@bot.message_handler(func=lambda message: True, content_types=['text', 'photo', 'video', 'audio', 'document'])
+def handle_all_messages(message):
+    if message.content_type == 'text':
+        response = f"Вы написали: {message.text}"
+    elif message.content_type == 'photo':
+        response = "Спасибо за фото!"
+    else:
+        response = "Спасибо за медиафайл!"
+    send_message(message, response)
 
-# Обработчик команды /info
-@bot.message_handler(commands=['info'])
-def send_info(message):
-    send_message(message, "Я - бот, созданный для демонстрации возможностей Telegram API.")
-
-# Обработчик текстовых сообщений
-@bot.message_handler(func=lambda message: True)
-def echo_all(message):
-    send_message(message, f"Вы написали: {message.text}")
-
-# Обработчик медиафайлов (например, фото)
-@bot.message_handler(content_types=['photo'])
-def handle_photo(message):
-    send_message(message, "Спасибо за фото!")
-
-# Дополнительные обработчики для различных типов сообщений
-@bot.message_handler(content_types=['video', 'audio', 'document'])
-def handle_media(message):
-    send_message(message, "Спасибо за медиафайл!")
-
-# Обработчик ошибок
-def handle_error():
+# Запуск бота с обработкой ошибок
+def start_bot():
     while True:
         try:
             bot.polling()
@@ -66,7 +57,7 @@ def handle_error():
             logging.error(f"Ошибка при запуске бота: {e}")
             time.sleep(15)  # Перезапуск через 15 секунд
 
-# Запускаем бота
+# Основной запуск
 if __name__ == '__main__':
     logging.info("Запуск бота...")
-    handle_error()
+    start_bot()
