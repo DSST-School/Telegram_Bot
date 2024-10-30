@@ -86,3 +86,5 @@ if __name__ == '__main__':
     logging.info("Запуск бота...")
     while True:
         handle_error()
+
+# Это пример одного из телеграм ботов
