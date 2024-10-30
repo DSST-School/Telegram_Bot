@@ -5,18 +5,29 @@ from datetime import datetime
 TOKEN = 'ВАШ_ТОКЕН'
 bot = telebot.TeleBot(TOKEN)
 
-# Хранилище задач, в реальном приложении лучше использовать базу данных
+# Хранилище задач
 tasks = {}
 
 # Команда старт для приветствия
 @bot.message_handler(commands=['start'])
 def send_welcome(message):
-    bot.reply_to(message, "Привет! Я твой ежедневник. Используй команды:\n/add - добавить задачу\n/show - показать задачи\n/delete - удалить задачу\n/help - показать команды.")
+    bot.reply_to(message, (
+        "Привет! Я твой ежедневник. Используй команды:\n"
+        "/add - добавить задачу\n"
+        "/show - показать задачи\n"
+        "/delete - удалить задачу\n"
+        "/help - показать команды."
+    ))
 
 # Команда help для вывода всех доступных команд
 @bot.message_handler(commands=['help'])
 def help_message(message):
-    bot.reply_to(message, "/add - добавить задачу\n/show - показать задачи\n/delete - удалить задачу\n/help - показать команды.")
+    bot.reply_to(message, (
+        "/add - добавить задачу\n"
+        "/show - показать задачи\n"
+        "/delete - удалить задачу\n"
+        "/help - показать команды."
+    ))
 
 # Команда для добавления задачи
 @bot.message_handler(commands=['add'])
@@ -25,25 +36,22 @@ def add_task(message):
     bot.register_next_step_handler(msg, save_task)
 
 def save_task(message):
+    user_id = message.chat.id
     try:
-        task_text, task_time = message.text.split(", ")
-        task_time = datetime.strptime(task_time, "%H:%M").time()
-        user_id = message.chat.id
+        task_text, task_time_str = message.text.split(", ")
+        task_time = datetime.strptime(task_time_str.strip(), "%H:%M").time()
 
-        if user_id not in tasks:
-            tasks[user_id] = []
-        
-        tasks[user_id].append((task_text, task_time))
+        tasks.setdefault(user_id, []).append((task_text.strip(), task_time))
         bot.send_message(user_id, f"Задача '{task_text}' на {task_time} добавлена.")
     except ValueError:
-        bot.send_message(message.chat.id, "Ошибка! Используйте формат 'Задача, HH:MM'.")
+        bot.send_message(user_id, "Ошибка! Используйте формат 'Задача, HH:MM'.")
 
 # Команда для показа всех задач
 @bot.message_handler(commands=['show'])
 def show_tasks(message):
     user_id = message.chat.id
     if user_id in tasks and tasks[user_id]:
-        tasks_list = "\n".join([f"{task} на {time}" for task, time in tasks[user_id]])
+        tasks_list = "\n".join([f"{i + 1}. {task} на {time}" for i, (task, time) in enumerate(tasks[user_id])])
         bot.send_message(user_id, f"Ваши задачи на сегодня:\n{tasks_list}")
     else:
         bot.send_message(user_id, "У вас нет задач.")
