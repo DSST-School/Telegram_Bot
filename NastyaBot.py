@@ -1,5 +1,9 @@
 import telebot
 import requests
+import logging
+
+# Настройка логирования
+logging.basicConfig(level=logging.INFO)
 
 # Замените на токен вашего телеграм-бота и API-ключ OpenWeatherMap
 TELEGRAM_TOKEN = 'ВАШ_ТЕЛЕГРАМ_ТОКЕН'
@@ -10,16 +14,23 @@ bot = telebot.TeleBot(TELEGRAM_TOKEN)
 # Функция для получения погоды
 def get_weather(city):
     url = f"http://api.openweathermap.org/data/2.5/weather?q={city}&appid={WEATHER_API_KEY}&units=metric"
-    response = requests.get(url)
-    if response.status_code == 200:
+    try:
+        response = requests.get(url)
+        response.raise_for_status()  # Проверка на ошибки HTTP
         data = response.json()
-        city = data['name']
+        
+        city_name = data['name']
         country = data['sys']['country']
         temperature = data['main']['temp']
         description = data['weather'][0]['description']
-        return f"Погода в {city}, {country}:\nТемпература: {temperature}°C\nОписание: {description.capitalize()}"
-    else:
+        
+        return f"Погода в {city_name}, {country}:\nТемпература: {temperature}°C\nОписание: {description.capitalize()}"
+    except requests.exceptions.HTTPError as http_err:
+        logging.error(f"HTTP error occurred: {http_err}")
         return "Не удалось получить погоду для этого города. Проверьте правильность названия."
+    except Exception as err:
+        logging.error(f"An error occurred: {err}")
+        return "Произошла ошибка при получении данных."
 
 # Обработчик команды /start
 @bot.message_handler(commands=['start'])
@@ -29,9 +40,13 @@ def send_welcome(message):
 # Обработчик текстовых сообщений
 @bot.message_handler(func=lambda message: True)
 def send_weather(message):
-    city = message.text
-    weather_info = get_weather(city)
-    bot.reply_to(message, weather_info)
+    city = message.text.strip()
+    if city:
+        weather_info = get_weather(city)
+        bot.reply_to(message, weather_info)
+    else:
+        bot.reply_to(message, "Пожалуйста, введите название города.")
 
 # Запуск бота
-bot.polling()
+if __name__ == "__main__":
+    bot.polling()
