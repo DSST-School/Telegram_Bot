@@ -13,7 +13,7 @@ bot = telebot.TeleBot(TELEGRAM_TOKEN)
 
 # Функция для получения погоды
 def get_weather(city):
-    url = f"http://api.openweathermap.org/data/2.5/weather?q={city}&appid={WEATHER_API_KEY}&units=metric"
+    url = f"https://api.openweathermap.org/data/2.5/weather?q={city}&appid={WEATHER_API_KEY}&units=metric"
     try:
         response = requests.get(url)
         response.raise_for_status()  # Проверка на ошибки HTTP
@@ -27,9 +27,12 @@ def get_weather(city):
         return f"Погода в {city_name}, {country}:\nТемпература: {temperature}°C\nОписание: {description.capitalize()}"
     except requests.exceptions.HTTPError as http_err:
         logging.error(f"HTTP error occurred: {http_err}")
-        return "Не удалось получить погоду для этого города. Проверьте правильность названия."
+        return "Не удалось получить погоду для этого города. Проверьте правильность названия и наличие подключения к интернету."
+    except KeyError:
+        logging.error("Некорректные данные от API")
+        return "Не удалось найти информацию о погоде. Проверьте название города."
     except Exception as err:
-        logging.error(f"An error occurred: {err}")
+        logging.error(f"An unexpected error occurred: {err}")
         return "Произошла ошибка при получении данных."
 
 # Обработчик команды /start
@@ -49,4 +52,7 @@ def send_weather(message):
 
 # Запуск бота
 if __name__ == "__main__":
-    bot.polling()
+    try:
+        bot.polling()
+    except Exception as e:
+        logging.error(f"Ошибка при запуске бота: {e}")
