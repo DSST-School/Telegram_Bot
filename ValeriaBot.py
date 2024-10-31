@@ -35,15 +35,19 @@ def send_help(message):
 @bot.message_handler(commands=['exercises'])
 def send_exercise_options(message):
     markup = types.ReplyKeyboardMarkup(row_width=2, one_time_keyboard=True)
-    buttons = [types.KeyboardButton(text=muscle) for muscle in exercises.keys()]
+    buttons = [types.KeyboardButton(muscle) for muscle in exercises.keys()]
     markup.add(*buttons)
     bot.send_message(message.chat.id, "Выберите группу мышц:", reply_markup=markup)
+
+# Функция для получения случайного упражнения
+def get_random_exercise(muscle_group):
+    return random.choice(exercises[muscle_group])
 
 # Ответ на выбор группы мышц
 @bot.message_handler(func=lambda message: message.text in exercises)
 def send_exercise(message):
     muscle_group = message.text
-    exercise = random.choice(exercises[muscle_group])
+    exercise = get_random_exercise(muscle_group)
     bot.send_message(message.chat.id, f"Упражнение для {muscle_group}: {exercise}")
 
 # Обработка любого другого сообщения
@@ -54,4 +58,3 @@ def handle_unrecognized_message(message):
 # Запуск бота
 if __name__ == '__main__':
     bot.polling(none_stop=True)
-
