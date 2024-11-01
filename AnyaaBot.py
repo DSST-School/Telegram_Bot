@@ -12,32 +12,32 @@ def send_message(user_id, text):
     bot.send_message(user_id, text)
 
 def format_task_list(user_id):
+    """Форматирует список задач для пользователя."""
     if user_id in tasks and tasks[user_id]:
         return "\n".join([f"{i + 1}. {task} на {time}" for i, (task, time) in enumerate(tasks[user_id])])
     return "У вас нет задач."
 
-# Команда старт для приветствия
 @bot.message_handler(commands=['start'])
 def send_welcome(message):
-    send_message(message.chat.id, (
+    welcome_text = (
         "Привет! Я твой ежедневник. Используй команды:\n"
         "/add - добавить задачу\n"
         "/show - показать задачи\n"
         "/delete - удалить задачу\n"
         "/help - показать команды."
-    ))
+    )
+    send_message(message.chat.id, welcome_text)
 
-# Команда help для вывода всех доступных команд
 @bot.message_handler(commands=['help'])
 def help_message(message):
-    send_message(message.chat.id, (
+    help_text = (
         "/add - добавить задачу\n"
         "/show - показать задачи\n"
         "/delete - удалить задачу\n"
         "/help - показать команды."
-    ))
+    )
+    send_message(message.chat.id, help_text)
 
-# Команда для добавления задачи
 @bot.message_handler(commands=['add'])
 def add_task(message):
     msg = bot.send_message(message.chat.id, "Введите задачу и время в формате 'Задача, HH:MM'.")
@@ -46,22 +46,20 @@ def add_task(message):
 def save_task(message):
     user_id = message.chat.id
     try:
-        task_text, task_time_str = message.text.split(", ")
-        task_time = datetime.strptime(task_time_str.strip(), "%H:%M").time()
+        task_text, task_time_str = map(str.strip, message.text.split(","))
+        task_time = datetime.strptime(task_time_str, "%H:%M").time()
 
-        tasks.setdefault(user_id, []).append((task_text.strip(), task_time))
+        tasks.setdefault(user_id, []).append((task_text, task_time))
         send_message(user_id, f"Задача '{task_text}' на {task_time} добавлена.")
     except ValueError:
         send_message(user_id, "Ошибка! Используйте формат 'Задача, HH:MM'.")
 
-# Команда для показа всех задач
 @bot.message_handler(commands=['show'])
 def show_tasks(message):
     user_id = message.chat.id
     tasks_list = format_task_list(user_id)
     send_message(user_id, f"Ваши задачи на сегодня:\n{tasks_list}")
 
-# Команда для удаления задачи
 @bot.message_handler(commands=['delete'])
 def delete_task(message):
     user_id = message.chat.id
@@ -78,9 +76,11 @@ def remove_task(message):
         task_num = int(message.text) - 1
         task_text, task_time = tasks[user_id].pop(task_num)
         send_message(user_id, f"Задача '{task_text}' на {task_time} удалена.")
-    except (IndexError, ValueError):
+    except IndexError:
+        send_message(user_id, "Ошибка! Номер задачи вне диапазона.")
+    except ValueError:
         send_message(user_id, "Ошибка! Введите корректный номер задачи.")
 
 # Запуск бота
-bot.polling(none_stop=True)
-
+if __name__ == "__main__":
+    bot.polling(none_stop=True)
