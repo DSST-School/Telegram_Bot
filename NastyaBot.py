@@ -14,17 +14,21 @@ bot = telebot.TeleBot(TELEGRAM_TOKEN)
 # Функция для получения погоды
 def get_weather(city):
     url = f"https://api.openweathermap.org/data/2.5/weather?q={city}&appid={WEATHER_API_KEY}&units=metric"
+    
     try:
         response = requests.get(url)
         response.raise_for_status()  # Проверка на ошибки HTTP
         data = response.json()
-        
+
         city_name = data['name']
         country = data['sys']['country']
         temperature = data['main']['temp']
         description = data['weather'][0]['description']
-        
-        return f"Погода в {city_name}, {country}:\nТемпература: {temperature}°C\nОписание: {description.capitalize()}"
+
+        return (f"Погода в {city_name}, {country}:\n"
+                f"Температура: {temperature}°C\n"
+                f"Описание: {description.capitalize()}")
+    
     except requests.exceptions.HTTPError as http_err:
         logging.error(f"HTTP error occurred: {http_err}")
         return "Не удалось получить погоду для этого города. Проверьте правильность названия и наличие подключения к интернету."
@@ -32,7 +36,7 @@ def get_weather(city):
         logging.error("Некорректные данные от API")
         return "Не удалось найти информацию о погоде. Проверьте название города."
     except Exception as err:
-        logging.error(f"An unexpected error occurred: {err}")
+        logging.error(f"Произошла неожиданная ошибка: {err}")
         return "Произошла ошибка при получении данных."
 
 # Обработчик команды /start
@@ -53,6 +57,6 @@ def send_weather(message):
 # Запуск бота
 if __name__ == "__main__":
     try:
-        bot.polling()
+        bot.polling(none_stop=True)  # добавлено для непрерывной работы
     except Exception as e:
         logging.error(f"Ошибка при запуске бота: {e}")
